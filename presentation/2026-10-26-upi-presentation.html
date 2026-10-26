@@ -1,0 +1,1006 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}</style>
+<title>UPI, Count Not Money</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a fixed 1280x720 slide stage, scaled to fit any screen; slides stack inside it and one is active at a time. */
+:root {
+  --bg: #e9edf3;
+  --paper: #fbfcfe;
+  --ink: #111827;
+  --ink-2: #485263;
+  --muted: #7f8898;
+  --line: #dde3ec;
+  --blue: #2a78d6;
+  --orange: #eb6834;
+  --tint-blue: #e7f0fb;
+  --tint-orange: #fdeee6;
+  --code: #eff3f8;
+  --shadow: 0 1px 2px rgba(17,24,39,.06), 0 12px 40px rgba(17,24,39,.08);
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #080b10; --paper: #131820; --ink: #eef1f6; --ink-2: #b4bccb; --muted: #7c8697;
+    --line: #283041; --blue: #3987e5; --orange: #e0662f; --tint-blue: #14233a; --tint-orange: #2f1c13;
+    --code: #0e131a; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 40px rgba(0,0,0,.35); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #080b10; --paper: #131820; --ink: #eef1f6; --ink-2: #b4bccb; --muted: #7c8697;
+  --line: #283041; --blue: #3987e5; --orange: #e0662f; --tint-blue: #14233a; --tint-orange: #2f1c13;
+  --code: #0e131a; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 40px rgba(0,0,0,.35); color-scheme: dark;
+}
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--f-body); overflow: hidden;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0; box-sizing: border-box;
+}
+*, *::before, *::after { box-sizing: border-box; }
+.viewport { position: relative; height: 100%; width: 100%; display: grid; place-items: center; }
+.stage {
+  position: absolute; left: 50%; top: 50%; width: 1280px; height: 720px; transform-origin: center center;
+  background: var(--paper); box-shadow: var(--shadow); border-radius: 6px; overflow: hidden;
+}
+.slide {
+  position: absolute; inset: 0; padding: 52px 72px 64px; display: flex; flex-direction: column; gap: 22px;
+  opacity: 0; visibility: hidden; transform: translateX(24px);
+  transition: opacity .45s ease, transform .45s ease, visibility 0s linear .45s;
+}
+.slide.active { opacity: 1; visibility: visible; transform: none; transition: opacity .45s ease, transform .45s ease; }
+.slide.past { transform: translateX(-24px); }
+
+/* Type scale: 13 / 15 / 18 / 22 / 30 / 44 / 76 */
+.eyebrow { font-family: var(--f-mono); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--blue); }
+h1, h2, h3 { font-family: var(--f-display); margin: 0; text-wrap: balance; color: var(--ink); }
+h2 { font-size: 44px; font-weight: 700; letter-spacing: -.02em; line-height: 1.05; }
+h3 { font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
+p { margin: 0; line-height: 1.5; }
+.lead { font-size: 22px; line-height: 1.45; color: var(--ink-2); max-width: 60ch; }
+.small { font-size: 15px; color: var(--ink-2); line-height: 1.5; }
+.mono { font-family: var(--f-mono); }
+.num { font-variant-numeric: tabular-nums; }
+.blue { color: var(--blue); } .orange { color: var(--orange); }
+.head { display: flex; flex-direction: column; gap: 10px; }
+.body { flex: 1; min-height: 0; display: grid; gap: 28px; }
+.foot {
+  position: absolute; left: 72px; right: 72px; bottom: 22px; display: flex; justify-content: space-between;
+  font-family: var(--f-mono); font-size: 12px; color: var(--muted); letter-spacing: .04em;
+}
+
+/* Reveal steps */
+[data-step] { transition: opacity .4s ease, transform .4s ease; }
+[data-step].hidden-step { opacity: 0; transform: translateY(10px); }
+
+/* Title slide */
+.title-slide { padding: 0; flex-direction: row; gap: 0; }
+.title-left { flex: 1.25; padding: 64px 72px; display: flex; flex-direction: column; justify-content: space-between; }
+.title-right {
+  flex: 1; background: var(--tint-blue); padding: 64px 56px; display: flex; flex-direction: column;
+  justify-content: center; gap: 14px; position: relative; overflow: hidden;
+}
+.title-left h1 { font-size: 76px; font-weight: 800; line-height: .98; letter-spacing: -.035em; }
+.title-left h1 .strike { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 5px; text-decoration-color: var(--orange); }
+.byline { display: grid; gap: 4px; font-size: 15px; color: var(--ink-2); }
+.byline strong { color: var(--ink); font-weight: 600; font-size: 18px; }
+.counter { font-family: var(--f-display); font-size: 120px; font-weight: 800; letter-spacing: -.04em; line-height: 1; color: var(--blue); font-variant-numeric: tabular-nums; }
+.counter-unit { font-family: var(--f-display); font-size: 30px; font-weight: 700; color: var(--ink); }
+.counter-sub { font-size: 15px; color: var(--ink-2); }
+.ticker { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+.ticker span { font-family: var(--f-mono); font-size: 13px; padding: 6px 10px; border-radius: 4px; background: var(--paper); color: var(--ink-2); }
+.ticker b { color: var(--ink); font-weight: 500; }
+.keyhint { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+.keyhint kbd { font-family: var(--f-mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 3px; padding: 1px 6px; color: var(--ink-2); background: var(--paper); }
+
+/* Stat tiles */
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.tile { border-top: 3px solid var(--line); padding-top: 16px; display: grid; gap: 6px; align-content: start; }
+.tile.b { border-color: var(--blue); } .tile.o { border-color: var(--orange); } .tile.k { border-color: var(--ink); }
+.tile .big { font-family: var(--f-display); font-size: 56px; font-weight: 800; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.tile .lbl { font-size: 15px; color: var(--ink-2); line-height: 1.45; }
+.question {
+  font-family: var(--f-display); font-size: 30px; font-weight: 700; line-height: 1.2; letter-spacing: -.015em;
+  padding: 22px 26px; background: var(--tint-orange); border-radius: 4px; max-width: 30em; text-wrap: balance;
+}
+
+/* Lists */
+.olist { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: n; }
+.olist li { display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: baseline; font-size: 19px; line-height: 1.4; }
+.olist li::before { counter-increment: n; content: counter(n, decimal-leading-zero); font-family: var(--f-mono); font-size: 14px; color: var(--blue); }
+.rq { display: grid; grid-template-columns: 56px 1fr; gap: 14px; align-items: start; padding: 16px 0; border-top: 1px solid var(--line); }
+.rq .tag { font-family: var(--f-mono); font-size: 14px; font-weight: 500; color: var(--paper); background: var(--blue); border-radius: 3px; padding: 4px 0; text-align: center; }
+.rq h3 { font-size: 21px; margin-bottom: 4px; }
+
+/* Tables */
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th { text-align: left; font-family: var(--f-mono); font-weight: 500; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); }
+td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+td.code, .code { font-family: var(--f-mono); font-size: 14px; }
+td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Buttons / tabs */
+.btn, .tab, .seg button {
+  font-family: var(--f-body); font-size: 14px; font-weight: 500; cursor: pointer; border-radius: 4px;
+  border: 1px solid var(--line); background: var(--paper); color: var(--ink-2); padding: 7px 14px;
+}
+.btn:hover, .tab:hover, .seg button:hover { border-color: var(--blue); color: var(--ink); }
+.btn:focus-visible, .tab:focus-visible, .seg button:focus-visible, .node:focus-visible, .term:focus-visible, input:focus-visible, .navbtn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.tabs { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; }
+.seg button[aria-pressed="true"] { background: var(--blue); color: #fff; }
+.spacer { flex: 1; }
+
+/* Charts */
+.chart { position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { font-family: var(--f-mono); font-size: 12px; fill: var(--muted); }
+.chart .grid line { stroke: var(--line); stroke-width: 1; }
+.chart .axis-title { font-size: 12px; fill: var(--muted); }
+.chart .draw { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.chart .draw.go { transition: stroke-dashoffset 1.4s cubic-bezier(.3,.7,.2,1); stroke-dashoffset: 0; }
+.chart .ev line { stroke: var(--muted); stroke-dasharray: 4 4; }
+.chart .ev text { fill: var(--ink-2); font-size: 12px; }
+.chart .cross { stroke: var(--ink-2); stroke-width: 1; }
+.chart .endlbl { font-size: 13px; font-weight: 500; }
+.tip {
+  position: absolute; top: 4px; pointer-events: none; background: var(--ink); color: var(--paper);
+  font-family: var(--f-mono); font-size: 12px; line-height: 1.5; padding: 7px 10px; border-radius: 4px; white-space: nowrap;
+  transform: translateX(12px); opacity: 0; transition: opacity .12s;
+}
+.tip.on { opacity: 1; }
+.tip .sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
+.legend { display: flex; gap: 18px; font-size: 14px; color: var(--ink-2); flex-wrap: wrap; }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.legend i.dot { width: 8px; height: 8px; border-radius: 50%; }
+
+.split { display: grid; grid-template-columns: 1.7fr 1fr; gap: 40px; min-height: 0; }
+.split > * { min-width: 0; }
+.chartcol { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.notes-col { display: flex; flex-direction: column; gap: 18px; padding-top: 6px; }
+.kv { display: grid; gap: 4px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.kv .k { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.kv .v { font-family: var(--f-display); font-size: 30px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.kv .d { font-size: 15px; color: var(--ink-2); line-height: 1.45; }
+
+/* Dataset */
+.facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.fact { display: grid; gap: 4px; }
+.fact .k { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.fact .v { font-family: var(--f-display); font-size: 26px; font-weight: 700; letter-spacing: -.01em; }
+.source { display: flex; gap: 14px; align-items: center; font-size: 15px; color: var(--ink-2); flex-wrap: wrap; }
+.source .mono { color: var(--ink); background: var(--code); padding: 4px 8px; border-radius: 3px; font-size: 13px; }
+.rawbox { background: var(--code); border-radius: 4px; padding: 6px 12px; }
+.rawbox td { font-family: var(--f-mono); font-size: 13px; padding: 6px 8px; white-space: pre; }
+.flag { color: var(--orange); font-weight: 500; }
+
+/* Pipeline */
+.pipe { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0; position: relative; }
+.node {
+  position: relative; background: none; border: 0; padding: 0 10px 0 0; text-align: left; cursor: pointer; color: var(--ink);
+  display: grid; gap: 8px; font-family: var(--f-body);
+}
+.node .bar { height: 6px; background: var(--line); border-radius: 3px; transition: background .2s; }
+.node .nm { font-family: var(--f-display); font-size: 20px; font-weight: 700; }
+.node .tool { font-family: var(--f-mono); font-size: 13px; color: var(--muted); }
+.node:hover .bar { background: var(--tint-blue); }
+.node[aria-pressed="true"] .bar { background: var(--blue); }
+.node[aria-pressed="true"] .nm { color: var(--blue); }
+.codepanel { display: grid; grid-template-columns: 1fr 1.4fr; gap: 32px; align-items: start; }
+.codepanel > * { min-width: 0; }
+pre.codeblk {
+  margin: 0; background: var(--code); border-radius: 4px; padding: 20px 22px; font-family: var(--f-mono); font-size: 16px;
+  line-height: 1.6; color: var(--ink); white-space: pre; overflow-x: auto;
+}
+pre.codeblk .c { color: var(--muted); }
+pre.codeblk .s { color: var(--orange); }
+pre.codeblk .f { color: var(--blue); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { font-family: var(--f-mono); font-size: 13px; padding: 5px 10px; border-radius: 3px; background: var(--tint-blue); color: var(--ink); }
+
+/* Equation */
+.eq {
+  font-family: var(--f-mono); font-size: 25px; line-height: 1.7; padding: 22px 26px; background: var(--code); border-radius: 4px;
+  color: var(--ink-2); letter-spacing: -.01em;
+}
+.term {
+  font: inherit; color: var(--ink); background: none; border: 0; border-bottom: 2px dotted var(--blue); padding: 0 2px; cursor: help;
+}
+.term:hover, .term.on { background: var(--tint-blue); color: var(--blue); }
+.term.key { border-bottom-color: var(--orange); }
+.term.key:hover, .term.key.on { background: var(--tint-orange); color: var(--orange); }
+.explain { min-height: 92px; display: grid; gap: 6px; padding: 16px 20px; border-left: 3px solid var(--blue); }
+.explain .t { font-family: var(--f-mono); font-size: 13px; color: var(--blue); letter-spacing: .04em; }
+.explain p { font-size: 18px; line-height: 1.45; }
+.why { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.why > div { display: grid; gap: 6px; align-content: start; }
+
+/* Slider */
+.slider { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; }
+.slider input { width: 100%; accent-color: var(--blue); }
+.readout { font-family: var(--f-display); font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Findings */
+.findings { display: grid; gap: 0; }
+.finding { display: grid; grid-template-columns: 220px 1fr; gap: 28px; align-items: baseline; padding: 15px 0; border-top: 1px solid var(--line); }
+.finding .fig { font-family: var(--f-display); font-size: 38px; font-weight: 800; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.finding h3 { font-size: 21px; margin-bottom: 3px; }
+.finding p { font-size: 16px; color: var(--ink-2); }
+
+.cols3 { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 36px; }
+.cols3 > div { display: grid; gap: 12px; align-content: start; }
+.blist { margin: 0; padding-left: 18px; display: grid; gap: 9px; font-size: 16px; line-height: 1.45; color: var(--ink-2); }
+.conclude { background: var(--tint-blue); border-radius: 4px; padding: 22px 24px; display: grid; gap: 12px; }
+.conclude p.big { font-family: var(--f-display); font-size: 24px; font-weight: 700; line-height: 1.25; color: var(--ink); letter-spacing: -.01em; }
+
+/* Chrome outside the stage */
+.chrome {
+  position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  display: flex; gap: 6px; align-items: center; z-index: 20;
+}
+.navbtn {
+  font-family: var(--f-mono); font-size: 13px; background: var(--paper); color: var(--ink-2); border: 1px solid var(--line);
+  border-radius: 4px; padding: 6px 10px; cursor: pointer;
+}
+.navbtn:hover { color: var(--ink); border-color: var(--blue); }
+.progress { position: fixed; left: 0; right: 0; top: env(safe-area-inset-top, 0px); height: 3px; z-index: 20; background: transparent; }
+.progress div { height: 100%; background: var(--blue); width: 0; transition: width .4s ease; }
+.notes {
+  position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: calc(56px + env(safe-area-inset-bottom, 0px)); z-index: 19; max-width: 880px; margin: 0 auto;
+  background: var(--ink); color: var(--paper); border-radius: 6px; padding: 16px 20px; font-size: 16px; line-height: 1.55;
+  box-shadow: var(--shadow); max-height: 40vh; overflow-y: auto;
+}
+.notes .t { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; opacity: .7; margin-bottom: 6px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .slide, .slide.active, [data-step], .chart .draw.go, .progress div { transition: none !important; }
+  .chart .draw { stroke-dashoffset: 0; }
+}
+</style>
+
+</head>
+<body>
+<div class="progress"><div id="prog"></div></div>
+<div class="viewport" id="viewport">
+<div class="stage" id="stage">
+
+<!-- 1 Title -->
+<section class="slide title-slide" data-title="Title" data-notes="Good morning. My project looks at UPI, the real-time payment system run by NPCI. Every month the news reports a new record, like the 24 billion transactions you see here for September 2026. I wanted to look underneath those totals and ask two things: is growth still accelerating, and what kind of payments are driving it? The short answer is in the title. UPI is growing in count, not in money.">
+  <div class="title-left">
+    <div class="head" style="gap:18px">
+      <div class="eyebrow">Python for Data Science · Individual Project</div>
+      <h1>UPI is growing in <span class="blue">count</span>, not in <span class="orange">money</span>.</h1>
+      <p class="lead" style="font-size:20px">Shrinking payment sizes and a slowing growth curve in India's UPI, April 2016 to September 2026.</p>
+    </div>
+    <div style="display:grid;gap:22px">
+      <div class="byline">
+        <strong>Devashish Kahate</strong>
+        <span>MSc Economics (Data Analytics) · Symbiosis School of Economics, Pune</span>
+        <span>Data: National Payments Corporation of India (NPCI)</span>
+      </div>
+      <div class="keyhint"><kbd>→</kbd> next &nbsp; <kbd>←</kbd> back &nbsp; <kbd>N</kbd> notes &nbsp; <kbd>F</kbd> fullscreen &nbsp; <kbd>T</kbd> theme</div>
+    </div>
+  </div>
+  <div class="title-right">
+    <div class="eyebrow">September 2026</div>
+    <div><span class="counter" id="counter">24.07</span></div>
+    <div class="counter-unit">billion UPI transactions in one month</div>
+    <div class="counter-sub">That is about 802 million payments a day, across 756 banks.</div>
+    <div class="ticker">
+      <span>Value <b>₹29.37 lakh crore</b></span>
+      <span>Avg payment <b>₹1,220</b></span>
+    </div>
+  </div>
+</section>
+
+<!-- 2 Problem -->
+<section class="slide" data-title="Problem statement" data-notes="Here is the problem. Since April 2019 the number of UPI transactions has grown about 31 times, but the rupee value has grown only about 21 times. If both grew together, nothing would be interesting. The gap means the average payment is getting smaller: it is down 31 percent from its 2021 peak. Monthly headlines only report totals, and raw monthly totals are also distorted by short months like February and by festivals. So the totals alone cannot tell us whether growth is slowing or what is driving it.">
+  <div class="head">
+    <div class="eyebrow">Problem statement</div>
+    <h2>Every month is a record. The totals hide what is changing.</h2>
+  </div>
+  <div class="body" style="align-content:start;gap:36px">
+    <div class="tiles">
+      <div class="tile b"><div class="big blue">×30.8</div><div class="lbl">Growth in the <b>number</b> of UPI transactions, April 2019 to September 2026</div></div>
+      <div class="tile o"><div class="big orange">×20.7</div><div class="lbl">Growth in the <b>rupee value</b> moved over the same period</div></div>
+      <div class="tile k"><div class="big">−31%</div><div class="lbl">Fall in the average payment, from ₹1,870 (May 2021) to ₹1,282 (12-month average)</div></div>
+    </div>
+    <div class="question" data-step>Is UPI's growth slowing down, and is it now driven by many small everyday payments rather than bigger transfers?</div>
+  </div>
+  <div class="foot"><span>Source: NPCI UPI Product Statistics</span><span class="pg"></span></div>
+</section>
+
+<!-- 3 Objectives & RQs -->
+<section class="slide" data-title="Objectives and research questions" data-notes="I set three objectives: build a clean dataset straight from NPCI, measure the story with simple metrics anyone can check, and then test the main claim with a regression. That leads to four research questions. One, is growth slowing. Two, is the average payment shrinking. Three, do calendar effects like short months and festivals, and shocks like COVID, show up in the data. Four, does adding more banks still drive growth.">
+  <div class="head">
+    <div class="eyebrow">Objectives and research questions</div>
+    <h2>Three objectives, four questions</h2>
+  </div>
+  <div class="body" style="grid-template-columns:1fr 1.25fr;gap:56px;align-content:start">
+    <div style="display:grid;gap:16px;align-content:start">
+      <h3>Objectives</h3>
+      <ol class="olist">
+        <li>Build a clean, analysis-ready monthly dataset from NPCI's published statistics.</li>
+        <li>Measure growth, payment size and seasonality with simple metrics that can be checked by hand.</li>
+        <li>Test the slowdown formally with a regression that treats time-series errors correctly.</li>
+      </ol>
+    </div>
+    <div>
+      <div class="rq" data-step><span class="tag">RQ1</span><div><h3>Is UPI growth slowing down?</h3><p class="small">Year-on-year growth over time, and a regression with a curved trend.</p></div></div>
+      <div class="rq" data-step><span class="tag">RQ2</span><div><h3>Is the average payment getting smaller?</h3><p class="small">Ticket size = value ÷ volume, in rupees.</p></div></div>
+      <div class="rq" data-step><span class="tag">RQ3</span><div><h3>Do calendar effects and shocks show up?</h3><p class="small">Month length, the festive season, the COVID lockdown.</p></div></div>
+      <div class="rq" data-step style="border-bottom:1px solid var(--line)"><span class="tag">RQ4</span><div><h3>Do more banks still drive growth?</h3><p class="small">Banks live on UPI vs transactions, in levels and in growth rates.</p></div></div>
+    </div>
+  </div>
+  <div class="foot"><span>UPI, Count Not Money</span><span class="pg"></span></div>
+</section>
+
+<!-- 4 Dataset -->
+<section class="slide" data-title="Dataset" data-notes="The data comes from NPCI, the organisation that runs UPI, from its official UPI Product Statistics page. It is one table per financial year, which I combined into one file: 126 months from April 2016 to September 2026. There are only five columns: financial year, month, number of banks live on UPI, volume in millions and value in crore. Small dataset, but every row is an official national figure. Click to show the raw rows: notice the numbers are stored as text, in Indian comma format, which is the first cleaning problem.">
+  <div class="head">
+    <div class="eyebrow">Dataset description and source</div>
+    <h2>Official NPCI monthly statistics, 126 months</h2>
+  </div>
+  <div class="body" style="align-content:start;gap:26px">
+    <div class="source"><span>Source</span><span class="mono">npci.org.in/product/upi/product-statistics</span><span>National Payments Corporation of India · UPI Product Statistics</span></div>
+    <div class="facts">
+      <div class="fact"><span class="k">Coverage</span><span class="v">Apr 2016 – Sep 2026</span></div>
+      <div class="fact"><span class="k">Frequency</span><span class="v">Monthly, national</span></div>
+      <div class="fact"><span class="k">Rows</span><span class="v num">126 → 123 clean</span></div>
+      <div class="fact"><span class="k">Columns</span><span class="v num">5</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:36px;align-items:start">
+      <table>
+        <thead><tr><th>Column</th><th>Meaning</th><th>Unit</th></tr></thead>
+        <tbody>
+          <tr><td class="code">fy</td><td>Indian financial year</td><td>Apr–Mar</td></tr>
+          <tr><td class="code">month</td><td>Calendar month</td><td>text, e.g. August-2026</td></tr>
+          <tr><td class="code">banks_live</td><td>Banks live on UPI</td><td>count</td></tr>
+          <tr><td class="code">volume_mn</td><td>Number of transactions</td><td>million</td></tr>
+          <tr><td class="code">value_cr</td><td>Rupee value of transactions</td><td>crore (10⁷ ₹)</td></tr>
+        </tbody>
+      </table>
+      <div style="display:grid;gap:12px">
+        <div><button class="btn" id="rawBtn" aria-expanded="false">Show raw rows</button></div>
+        <div class="rawbox" id="rawBox" hidden>
+          <table>
+            <thead><tr><th>month</th><th>volume_mn</th><th>value_cr</th></tr></thead>
+            <tbody>
+              <tr><td>November-2018</td><td>524.94</td><td>82232.21</td></tr>
+              <tr><td>December-2018</td><td>620.17</td><td>"1,02,594.82"</td></tr>
+              <tr><td>March-2025</td><td>" 18,301.51 "</td><td>" 24,77,221.61 "</td></tr>
+              <tr><td>April-2026</td><td>"22,346.8"</td><td class="flag">"29,029,88.05"</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small" id="rawHint">All numbers arrive as text. Click to see why.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Big Data 5V slide not applicable to the Python for Data Science project</span><span class="pg"></span></div>
+</section>
+
+<!-- 5 Tools & workflow -->
+<section class="slide" data-title="Tools and workflow" data-notes="The whole project is a six-stage pipeline in one Jupyter notebook, using only four libraries: pandas, numpy, matplotlib and statsmodels. Click any stage to see the actual code. The two lines I want to point out are in Features: pct_change with 12 compares each month with the same month last year, which removes seasonality, and in Model: cov_type HAC gives Newey-West standard errors, which I will explain on the methodology slide.">
+  <div class="head">
+    <div class="eyebrow">Tools and project architecture</div>
+    <h2>One notebook, six stages, four libraries</h2>
+  </div>
+  <div class="body" style="align-content:start;gap:30px">
+    <div class="chips"><span class="chip">Python 3</span><span class="chip">Jupyter Notebook</span><span class="chip">pandas</span><span class="chip">numpy</span><span class="chip">matplotlib</span><span class="chip">statsmodels</span></div>
+    <div class="pipe" id="pipe"></div>
+    <div class="codepanel">
+      <div style="display:grid;gap:10px"><h3 id="stageName"></h3><p class="small" id="stageText" style="font-size:19px"></p></div>
+      <pre class="codeblk" id="stageCode"></pre>
+    </div>
+  </div>
+  <div class="foot"><span>Notebook: 2026-10-26-upi-analysis.ipynb</span><span class="pg"></span></div>
+</section>
+
+<!-- 6 Cleaning -->
+<section class="slide" data-title="Data cleaning" data-notes="Cleaning had five problems. Numbers in Indian comma format, mixed with plain numbers in the same column. Stray spaces. One genuine typo from NPCI: April 2026 is printed with commas in the wrong place. Removing commas gives 29.03 lakh crore, and it sits right between March and May, so the value itself is fine. Months were text and newest first, so I converted them to dates and sorted. And April to June 2016 had zero transactions, so I dropped them, because value divided by volume is undefined at zero. Toggle to see before and after.">
+  <div class="head">
+    <div class="eyebrow">Data cleaning and preprocessing</div>
+    <h2>Five problems, one helper function</h2>
+  </div>
+  <div class="body" style="grid-template-columns:1fr 1.05fr;gap:44px;align-content:start">
+    <table>
+      <thead><tr><th>Issue</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td>Indian comma format <span class="code">1,33,460.72</span></td><td>remove commas</td></tr>
+        <tr><td>Plain and comma numbers mixed in one column</td><td>same fix covers both</td></tr>
+        <tr><td>Stray spaces <span class="code">" 18,301.51 "</span></td><td>strip spaces</td></tr>
+        <tr><td>NPCI typo, April 2026 <span class="code flag">29,029,88.05</span></td><td>remove commas, check against neighbours</td></tr>
+        <tr><td>Month as text, newest first; 3 zero months (2016)</td><td>to date, sort, drop zeros</td></tr>
+      </tbody>
+    </table>
+    <div style="display:grid;gap:16px;align-content:start">
+      <div class="tabs"><span class="small">Show</span><div class="seg" role="group" aria-label="Before or after cleaning"><button id="cBefore" aria-pressed="true">Before</button><button id="cAfter" aria-pressed="false">After</button></div></div>
+      <div class="rawbox"><table id="cleanTbl"><thead><tr><th>month</th><th class="r">volume_mn</th><th class="r">value_cr</th></tr></thead><tbody></tbody></table></div>
+      <div style="display:grid;gap:8px">
+        <div class="small"><b style="color:var(--ink)">Sanity check on the typo</b> · value in ₹ lakh crore</div>
+        <div id="sanity" class="chart"></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>pd.to_numeric(col.str.replace(',', '').str.strip())</span><span class="pg"></span></div>
+</section>
+
+<!-- 7 Methodology -->
+<section class="slide" data-title="Methodology" data-notes="This is the one regression. The left side is the log of daily volume: log turns growth into a straight line, and per day removes the February effect. t counts months since April 2019. The key term is t squared: if its coefficient is negative, the growth rate itself is falling. Month dummies capture festivals and the COVID dummy captures the 2020 lockdown. Two choices to defend. I start in April 2019 because the launch years grew 300 to 1000 percent and no smooth curve fits both phases. And I use Newey-West errors because this month's error is correlated with last month's. Hover over any term for its meaning.">
+  <div class="head">
+    <div class="eyebrow">Methodology · replaces the PySpark / Hadoop slide</div>
+    <h2>One regression: is growth really slowing?</h2>
+  </div>
+  <div class="body" style="align-content:start;gap:24px">
+    <div class="eq" id="eq">
+      <button class="term" data-k="y">log(daily volume<sub>t</sub>)</button> = β₀ + β₁·<button class="term" data-k="t">t</button> + β₂·<button class="term key" data-k="t2">t²</button> + <button class="term" data-k="m">Σ γ<sub>m</sub>·Month<sub>m</sub></button> + δ·<button class="term" data-k="c">COVID<sub>t</sub></button> + <button class="term" data-k="e">ε<sub>t</sub></button>
+    </div>
+    <div class="explain" id="explain"><span class="t" id="exT">t² · the key term</span><p id="exP">If β₂ is negative, the growth rate itself falls over time. Implied annual growth at month t = e^(12·(β₁ + 2β₂t)) − 1.</p></div>
+    <div class="why">
+      <div><h3>Why start in April 2019?</h3><p class="small" style="font-size:16px">2016 to 2018 was the launch phase: banks onboarding, demonetisation, the BHIM app. Growth ran at 300% to 1000%+. A smooth curve cannot fit that and the mature phase together. The result holds for start dates from 2017 to 2020.</p></div>
+      <div><h3>Why Newey-West (HAC) errors?</h3><p class="small" style="font-size:16px">Monthly errors are autocorrelated (Durbin-Watson 0.70; 2 means none). Ordinary standard errors would be too small. <span class="code">cov_type='HAC'</span> corrects them: the coefficients are unchanged, the standard errors become 1.8× larger.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>statsmodels · smf.ols(...).fit(cov_type='HAC', cov_kwds={'maxlags': 12}) · n = 90 months</span><span class="pg"></span></div>
+</section>
+
+<!-- 8 Growth -->
+<section class="slide" data-title="Growth analysis" data-notes="First result. Both lines start at 100 in April 2019. Volume has reached about 3,080, value about 2,070: the gap opening up is the shrinking payment size. Switch to log scale: a straight line would mean constant growth, and the line is clearly flattening. Now the year-on-year tab: growth fell from 135 percent in September 2019 to 23 percent in September 2026. The spike in April and May 2021 is not real acceleration. It compares against the 2020 lockdown months, a very low base.">
+  <div class="head">
+    <div class="eyebrow">Analysis · RQ1</div>
+    <h2>Volume has outgrown value, and growth is bending</h2>
+  </div>
+  <div class="body split">
+    <div class="chartcol">
+      <div class="tabs">
+        <button class="tab" id="gTab1" aria-selected="true">Volume vs value</button>
+        <button class="tab" id="gTab2" aria-selected="false">Year-on-year growth</button>
+        <span class="spacer"></span>
+        <div class="seg" id="scaleSeg" role="group" aria-label="Axis scale"><button id="sLin" aria-pressed="true">Linear</button><button id="sLog" aria-pressed="false">Log</button></div>
+      </div>
+      <div class="legend" id="gLegend"></div>
+      <div class="chart" id="growthChart"></div>
+    </div>
+    <div class="notes-col">
+      <div class="kv"><span class="k">Since April 2019</span><span class="v"><span class="blue">×30.8</span> vs <span class="orange">×20.7</span></span><span class="d">Transactions vs rupee value. The gap is the smaller average payment.</span></div>
+      <div class="kv"><span class="k">YoY volume growth</span><span class="v">135% → 23%</span><span class="d">September 2019 vs September 2026</span></div>
+      <div class="kv" style="border:0"><span class="k">Base effect</span><span class="d">The April and May 2021 spike compares against the 2020 lockdown, not a real acceleration.</span></div>
+    </div>
+  </div>
+  <div class="foot"><span>Hover the chart for monthly values · Index: April 2019 = 100</span><span class="pg"></span></div>
+</section>
+
+<!-- 9 Ticket & seasonality -->
+<section class="slide" data-title="Ticket size and seasonality" data-notes="Second result, the average payment. Value divided by volume, smoothed over twelve months. It peaked at 1,870 rupees in May 2021 and has fallen every year since, to 1,282: about 31 percent smaller. UPI is now used for tea, auto rides and groceries, not just bigger transfers. Seasonality tab: each bar is how far a month sits above or below its own trend. On raw totals February looks 3 percent weak. Switch to per day and it flips to 4 percent above trend: the weakness was only the missing days. After adjusting, October to December stand out: the festive and wedding season.">
+  <div class="head">
+    <div class="eyebrow">Analysis · RQ2 and RQ3</div>
+    <h2>Smaller payments, and February was never weak</h2>
+  </div>
+  <div class="body split">
+    <div class="chartcol">
+      <div class="tabs">
+        <button class="tab" id="tTab1" aria-selected="true">Average payment</button>
+        <button class="tab" id="tTab2" aria-selected="false">Seasonality</button>
+        <span class="spacer"></span>
+        <div class="seg" id="seasonSeg" role="group" aria-label="Seasonality measure" hidden><button id="sRaw" aria-pressed="true">Raw monthly total</button><button id="sDay" aria-pressed="false">Per-day volume</button></div>
+      </div>
+      <div class="legend" id="tLegend"></div>
+      <div class="chart" id="ticketChart"></div>
+      <div class="chart" id="seasonChart" hidden></div>
+    </div>
+    <div class="notes-col">
+      <div class="kv"><span class="k">Average payment, 12-month</span><span class="v">₹1,870 → ₹1,282</span><span class="d">Peak May 2021 to September 2026: 31% smaller</span></div>
+      <div class="kv"><span class="k">February, vs trend</span><span class="v"><span class="orange">−3.1%</span> → <span class="blue">+4.2%</span></span><span class="d">Raw total vs per day. Its weakness was the 28 days.</span></div>
+      <div class="kv" style="border:0"><span class="k">Festive season</span><span class="v">Oct–Dec +4 to +5%</span><span class="d">Per-day volume above trend, 2019 to 2026</span></div>
+    </div>
+  </div>
+  <div class="foot"><span>Ticket size (₹) = value_cr × 10⁷ ÷ (volume_mn × 10⁶)</span><span class="pg"></span></div>
+</section>
+
+<!-- 10 Regression results -->
+<section class="slide" data-title="Regression results" data-notes="The regression confirms the slowdown. The t squared coefficient is negative and significant at under 0.1 percent, with Newey-West errors. The blue line is the growth rate the model implies: 127 percent a year in 2019, 16 percent now. Drag the slider to read it at any month. The dots are actual year-on-year growth, and they follow the line once COVID is past. The model also says the 2020 lockdown cut volume about 27 percent below trend, and October to December are 3 to 4 percent above January. R squared is 0.997, and the t squared result holds for every start date from 2017 to 2020.">
+  <div class="head">
+    <div class="eyebrow">Regression results · RQ1 and RQ3</div>
+    <h2>The model confirms an S-curve: 127% growth then, 16% now</h2>
+  </div>
+  <div class="body split" style="grid-template-columns:1.55fr 1fr">
+    <div class="chartcol">
+      <div class="legend"><span><i style="background:var(--blue)"></i>Model-implied annual growth</span><span><i class="dot" style="background:var(--muted)"></i>Actual YoY growth</span></div>
+      <div class="chart" id="regChart"></div>
+      <div class="slider">
+        <span class="readout" id="regRead">16%</span>
+        <div style="display:grid;gap:2px"><label for="regSlider" class="small" id="regLbl">Implied annual growth, September 2026</label><input type="range" id="regSlider" min="0" max="89" step="1" value="89"></div>
+      </div>
+    </div>
+    <div class="notes-col" style="gap:0">
+      <table>
+        <thead><tr><th>Term</th><th class="r">Effect</th><th class="r">p-value</th></tr></thead>
+        <tbody>
+          <tr><td><b>t²</b> (growth slowing)</td><td class="r">−0.000315</td><td class="r">&lt;0.001</td></tr>
+          <tr><td>COVID, Apr–May 2020</td><td class="r">−26.7%</td><td class="r">&lt;0.001</td></tr>
+          <tr><td>October vs January</td><td class="r">+4.4%</td><td class="r">0.001</td></tr>
+          <tr><td>November vs January</td><td class="r">+3.8%</td><td class="r">0.026</td></tr>
+          <tr><td>December vs January</td><td class="r">+2.7%</td><td class="r">0.004</td></tr>
+        </tbody>
+      </table>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px">
+        <div class="kv" style="border:0;padding:0"><span class="k">R²</span><span class="v" style="font-size:26px">0.997</span><span class="d">n = 90 months</span></div>
+        <div class="kv" style="border:0;padding:0"><span class="k">Robustness</span><span class="v" style="font-size:26px">4 / 4</span><span class="d">start dates with t² &lt; 0, p &lt; 0.001</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>log(daily volume) ~ t + t² + month dummies + COVID · Newey-West, 12 lags</span><span class="pg"></span></div>
+</section>
+
+<!-- 11 Findings -->
+<section class="slide" data-title="Key findings" data-notes="Five findings. One, growth is decelerating and the regression confirms it: a classic adoption S-curve. Two, UPI is growing in count, not money: payments are about a third smaller than in 2021. Three, raw monthly totals mislead: per day, February is above trend and the festive quarter is the real peak. Four, COVID cut volume 27 percent below trend for two months, then recovered fast. Five, banks and volume correlate at 0.98, but that is mostly because both rise over time. In growth rates the correlation is only 0.42, so more banks is only part of the story.">
+  <div class="head">
+    <div class="eyebrow">Key findings</div>
+    <h2>Five findings</h2>
+  </div>
+  <div class="findings">
+    <div class="finding" data-step><span class="fig blue">127→16%</span><div><h3>Growth is decelerating, and the regression confirms it</h3><p>t² is negative and significant in every sample. A classic S-curve of adoption.</p></div></div>
+    <div class="finding" data-step><span class="fig orange">−31%</span><div><h3>UPI is growing in count, not in money</h3><p>Volume ×30.8, value ×20.7 since 2019. The average payment fell from ₹1,870 to ₹1,282.</p></div></div>
+    <div class="finding" data-step><span class="fig">+4.2%</span><div><h3>Raw monthly totals mislead</h3><p>Per day, February sits above trend. October to December are the real peak.</p></div></div>
+    <div class="finding" data-step><span class="fig">−26.7%</span><div><h3>COVID was a short, sharp shock</h3><p>The 2020 lockdown cut volume below trend for two months, then growth resumed.</p></div></div>
+    <div class="finding" data-step style="border-bottom:1px solid var(--line)"><span class="fig">0.98 / 0.42</span><div><h3>"More banks, more UPI" is mostly a shared trend</h3><p>Correlation in levels vs in growth rates. Bank onboarding explains only part of adoption.</p></div></div>
+  </div>
+  <div class="foot"><span>All figures from the notebook outputs</span><span class="pg"></span></div>
+</section>
+
+<!-- 12 Limitations & conclusion -->
+<section class="slide" data-title="Limitations and conclusion" data-notes="Limitations. The data is national totals only, so I cannot split person-to-person from merchant payments; the small everyday payments explanation fits the data but is not directly tested. Ticket size is an average, not a median. The quadratic trend describes the slowdown inside the sample; it is not a forecast. And the COVID dummy covers only the first lockdown. Next steps would be NPCI's merchant split, a logistic S-curve model, and RBI data on cash. To conclude: UPI has moved from early adopters to everyday small payments. Thank you, happy to take questions.">
+  <div class="head">
+    <div class="eyebrow">Limitations, future scope and conclusion</div>
+    <h2>A maturing system of everyday payments</h2>
+  </div>
+  <div class="cols3">
+    <div>
+      <h3>Limitations</h3>
+      <ul class="blist">
+        <li>National totals only: no split by merchant vs person-to-person, state or app.</li>
+        <li>Ticket size is a mean; a few large payments can move it.</li>
+        <li>The t² trend describes the slowdown in-sample. It is not a forecast.</li>
+        <li>COVID dummy covers 2020 only; the 2021 wave shows in the residuals.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Future scope</h3>
+      <ul class="blist">
+        <li>Add NPCI's merchant (P2M) vs person (P2P) split.</li>
+        <li>Fit a logistic S-curve to estimate the saturation level.</li>
+        <li>Compare with RBI data on cash in circulation.</li>
+      </ul>
+    </div>
+    <div class="conclude">
+      <span class="eyebrow">Conclusion</span>
+      <p class="big">UPI has moved from early adopters to everyday small payments. Growth is slowing, payments are shrinking, and the system is maturing.</p>
+      <p class="small">Thank you. Questions welcome.</p>
+    </div>
+  </div>
+  <div class="foot"><span>References: NPCI, UPI Product Statistics (accessed October 2026) · Newey &amp; West (1987), Econometrica 55(3)</span><span class="pg"></span></div>
+</section>
+
+</div>
+</div>
+
+<div class="notes" id="notes" hidden><div class="t" id="notesT"></div><div id="notesB"></div></div>
+<div class="chrome">
+  <button class="navbtn" id="prevBtn" aria-label="Previous slide">←</button>
+  <span class="navbtn mono" id="pgBtn" style="cursor:default">1 / 12</span>
+  <button class="navbtn" id="nextBtn" aria-label="Next slide">→</button>
+  <button class="navbtn" id="notesBtn">Notes</button>
+  <button class="navbtn" id="themeBtn">Theme</button>
+  <button class="navbtn" id="fsBtn">Full screen</button>
+</div>
+
+<script>
+const DATA = {"months":["2016-07","2016-08","2016-09","2016-10","2016-11","2016-12","2017-01","2017-02","2017-03","2017-04","2017-05","2017-06","2017-07","2017-08","2017-09","2017-10","2017-11","2017-12","2018-01","2018-02","2018-03","2018-04","2018-05","2018-06","2018-07","2018-08","2018-09","2018-10","2018-11","2018-12","2019-01","2019-02","2019-03","2019-04","2019-05","2019-06","2019-07","2019-08","2019-09","2019-10","2019-11","2019-12","2020-01","2020-02","2020-03","2020-04","2020-05","2020-06","2020-07","2020-08","2020-09","2020-10","2020-11","2020-12","2021-01","2021-02","2021-03","2021-04","2021-05","2021-06","2021-07","2021-08","2021-09","2021-10","2021-11","2021-12","2022-01","2022-02","2022-03","2022-04","2022-05","2022-06","2022-07","2022-08","2022-09","2022-10","2022-11","2022-12","2023-01","2023-02","2023-03","2023-04","2023-05","2023-06","2023-07","2023-08","2023-09","2023-10","2023-11","2023-12","2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12","2026-01","2026-02","2026-03","2026-04","2026-05","2026-06","2026-07","2026-08","2026-09"],"vol":[0.09,0.09,0.09,0.1,0.29,1.99,4.46,4.38,6.37,7.2,9.36,10.35,11.63,16.8,30.98,76.96,105.02,145.64,151.83,171.4,178.05,190.08,189.48,246.37,273.75,312.02,405.87,482.36,524.94,620.17,672.75,674.19,799.54,781.79,733.54,754.54,822.29,918.35,955.02,1148.36,1218.77,1308.4,1305.02,1325.69,1246.84,999.57,1234.5,1336.93,1497.36,1618.83,1800.14,2071.62,2210.23,2234.16,2302.73,2292.9,2731.68,2641.06,2539.57,2807.51,3247.82,3555.55,3654.3,4218.65,4186.48,4566.3,4617.15,4527.49,5405.65,5583.05,5955.2,5862.75,6288.4,6579.63,6780.8,7305.42,7309.45,7829.49,8036.89,7534.76,8685.3,8863.26,9415.19,9335.06,9964.61,10586.02,10555.69,11408.79,11235.29,12020.23,12203.02,12102.67,13440.0,13303.99,14035.84,13885.14,14435.55,14963.05,15041.75,16584.97,15482.02,16730.01,16996.0,16106.19,18301.51,17893.42,18677.46,18395.01,19467.95,20008.31,19633.43,20700.92,20466.98,21634.67,21703.44,20394.18,22641.11,22346.8,23201.93,22716.07,23658.35,24508.96,24068.38],"val":[0.0,3.0,33.0,49.0,100.0,708.0,1696.0,1938.0,2425.0,2271.0,2797.0,3098.0,3411.0,4157.0,5326.0,7058.0,9669.0,13174.0,15571.0,19126.0,24173.0,27022.0,33289.0,40834.0,51843.0,54212.0,59835.0,74978.0,82232.0,102595.0,109932.0,106737.0,133461.0,142034.0,152449.0,146566.0,146387.0,154505.0,161457.0,191360.0,189229.0,202521.0,216243.0,222517.0,206462.0,151141.0,218392.0,261835.0,290538.0,298308.0,329028.0,386107.0,390999.0,416176.0,431182.0,425063.0,504886.0,493664.0,490639.0,547373.0,606281.0,639117.0,654352.0,771445.0,768436.0,826848.0,831993.0,826843.0,960582.0,983302.0,1041520.0,1014384.0,1062992.0,1072793.0,1116438.0,1211583.0,1190593.0,1282055.0,1298727.0,1235847.0,1410443.0,1415505.0,1489145.0,1475464.0,1533536.0,1576537.0,1579133.0,1715768.0,1739741.0,1822949.0,1841084.0,1827869.0,1978353.0,1964465.0,2044937.0,2007081.0,2064292.0,2060736.0,2063995.0,2349821.0,2155187.0,2324700.0,2348037.0,2196482.0,2477222.0,2394926.0,2514297.0,2403931.0,2508498.0,2485473.0,2489737.0,2727791.0,2631633.0,2796713.0,2833481.0,2684229.0,2952542.0,2902988.0,2990424.0,2892139.0,2987880.0,2982356.0,2937397.0],"banks":[21,21,25,26,30,35,36,44,44,48,49,52,53,55,57,60,61,67,71,86,91,97,101,110,114,114,122,128,128,129,134,139,142,144,143,142,143,141,141,141,143,143,144,146,148,153,155,155,164,168,174,189,200,207,207,213,216,220,224,229,235,249,259,261,274,282,297,304,314,316,323,330,338,346,358,365,376,382,385,390,399,414,445,458,473,484,492,505,516,522,550,560,572,583,598,602,605,608,622,632,637,641,647,653,661,668,673,675,684,688,686,683,684,685,691,694,705,713,720,731,741,752,756],"ticket":[42.0,343.0,3627.0,4857.0,3464.0,3557.0,3803.0,4424.0,3807.0,3154.0,2988.0,2994.0,2933.0,2474.0,1719.0,917.0,921.0,905.0,1026.0,1116.0,1358.0,1422.0,1757.0,1657.0,1894.0,1737.0,1474.0,1554.0,1567.0,1654.0,1634.0,1583.0,1669.0,1817.0,2078.0,1942.0,1780.0,1682.0,1691.0,1666.0,1553.0,1548.0,1657.0,1678.0,1656.0,1512.0,1769.0,1958.0,1940.0,1843.0,1828.0,1864.0,1769.0,1863.0,1872.0,1854.0,1848.0,1869.0,1932.0,1950.0,1867.0,1798.0,1791.0,1829.0,1836.0,1811.0,1802.0,1826.0,1777.0,1761.0,1749.0,1730.0,1690.0,1630.0,1646.0,1658.0,1629.0,1637.0,1616.0,1640.0,1624.0,1597.0,1582.0,1581.0,1539.0,1489.0,1496.0,1504.0,1548.0,1517.0,1509.0,1510.0,1472.0,1477.0,1457.0,1445.0,1430.0,1377.0,1372.0,1417.0,1392.0,1390.0,1382.0,1364.0,1354.0,1338.0,1346.0,1307.0,1289.0,1242.0,1268.0,1318.0,1286.0,1293.0,1306.0,1316.0,1304.0,1299.0,1289.0,1273.0,1263.0,1217.0,1220.0],"t12":[null,null,null,null,null,null,null,null,null,null,null,3088.0,3329.0,3507.0,3348.0,3020.0,2808.0,2587.0,2355.0,2079.0,1875.0,1731.0,1628.0,1517.0,1430.0,1369.0,1349.0,1402.0,1455.0,1518.0,1569.0,1608.0,1634.0,1667.0,1693.0,1717.0,1708.0,1703.0,1721.0,1730.0,1729.0,1720.0,1722.0,1730.0,1729.0,1704.0,1678.0,1679.0,1693.0,1706.0,1717.0,1734.0,1752.0,1778.0,1796.0,1811.0,1827.0,1856.0,1870.0,1869.0,1863.0,1859.0,1856.0,1853.0,1859.0,1855.0,1849.0,1846.0,1840.0,1831.0,1816.0,1798.0,1783.0,1769.0,1757.0,1743.0,1726.0,1711.0,1696.0,1680.0,1668.0,1654.0,1640.0,1628.0,1615.0,1603.0,1591.0,1578.0,1571.0,1561.0,1552.0,1541.0,1529.0,1519.0,1508.0,1497.0,1488.0,1479.0,1468.0,1461.0,1448.0,1437.0,1427.0,1415.0,1405.0,1393.0,1384.0,1372.0,1361.0,1349.0,1341.0,1332.0,1324.0,1315.0,1309.0,1305.0,1301.0,1298.0,1293.0,1290.0,1288.0,1286.0,1282.0],"yv":[null,null,null,null,null,null,null,null,null,null,null,null,12822.2,18566.7,34322.2,76860.0,36113.8,7218.6,3304.3,3813.2,2695.1,2540.0,1924.4,2280.4,2253.8,1757.3,1210.1,526.8,399.8,325.8,343.1,293.3,349.1,311.3,287.1,206.3,200.4,194.3,135.3,138.1,132.2,111.0,94.0,96.6,55.9,27.9,68.3,77.2,82.1,76.3,88.5,80.4,81.3,70.8,76.5,73.0,119.1,164.2,105.7,110.0,116.9,119.6,103.0,103.6,89.4,104.4,100.5,97.5,97.9,111.4,134.5,108.8,93.6,85.1,85.6,73.2,74.6,71.5,74.1,66.4,60.7,58.8,58.1,59.2,58.5,60.9,55.7,56.2,53.7,53.5,51.8,60.6,54.7,50.1,49.1,48.7,44.9,41.3,42.5,45.4,37.8,39.2,39.3,33.1,36.2,34.5,33.1,32.5,34.9,33.7,30.5,24.8,32.2,29.3,27.7,26.6,23.7,24.9,24.2,23.5,21.5,22.5,22.6],"yval":[null,null,null,null,null,null,null,null,null,null,null,null,897623.7,134418.4,16216.8,14431.2,9525.1,1761.0,818.0,887.1,896.8,1089.7,1090.1,1217.9,1419.7,1204.2,1023.5,962.3,750.4,678.8,606.0,458.1,452.1,425.6,358.0,258.9,182.4,185.0,169.8,155.2,130.1,97.4,96.7,108.5,54.7,6.4,43.3,78.6,98.5,93.1,103.8,101.8,106.6,105.5,99.4,91.0,144.5,226.6,124.7,109.1,108.7,114.2,98.9,99.8,96.5,98.7,93.0,94.5,90.3,99.2,112.3,85.3,75.3,67.9,70.6,57.1,54.9,55.1,56.1,49.5,46.8,44.0,43.0,45.5,44.3,47.0,41.4,41.6,46.1,42.2,41.8,47.9,40.3,38.8,37.3,36.0,34.6,30.7,30.7,37.0,23.9,27.5,27.5,20.2,25.2,21.9,23.0,19.8,21.5,20.6,20.6,16.1,22.1,20.3,20.7,22.2,19.2,21.2,18.9,20.3,19.1,20.0,18.0],"reg":{"months":["2019-04","2019-05","2019-06","2019-07","2019-08","2019-09","2019-10","2019-11","2019-12","2020-01","2020-02","2020-03","2020-04","2020-05","2020-06","2020-07","2020-08","2020-09","2020-10","2020-11","2020-12","2021-01","2021-02","2021-03","2021-04","2021-05","2021-06","2021-07","2021-08","2021-09","2021-10","2021-11","2021-12","2022-01","2022-02","2022-03","2022-04","2022-05","2022-06","2022-07","2022-08","2022-09","2022-10","2022-11","2022-12","2023-01","2023-02","2023-03","2023-04","2023-05","2023-06","2023-07","2023-08","2023-09","2023-10","2023-11","2023-12","2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12","2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12","2026-01","2026-02","2026-03","2026-04","2026-05","2026-06","2026-07","2026-08","2026-09"],"implied":[127.4,125.7,124.0,122.3,120.6,118.9,117.3,115.7,114.0,112.4,110.8,109.2,107.7,106.1,104.6,103.0,101.5,100.0,98.5,97.0,95.5,94.0,92.6,91.1,89.7,88.2,86.8,85.4,84.0,82.6,81.3,79.9,78.5,77.2,75.9,74.5,73.2,71.9,70.6,69.3,68.1,66.8,65.6,64.3,63.1,61.8,60.6,59.4,58.2,57.0,55.8,54.7,53.5,52.4,51.2,50.1,48.9,47.8,46.7,45.6,44.5,43.4,42.3,41.3,40.2,39.1,38.1,37.1,36.0,35.0,34.0,33.0,32.0,31.0,30.0,29.0,28.1,27.1,26.1,25.2,24.2,23.3,22.4,21.5,20.5,19.6,18.7,17.8,17.0,16.1],"actual":[311.3,287.1,206.3,200.4,194.3,135.3,138.1,132.2,111.0,94.0,96.6,55.9,27.9,68.3,77.2,82.1,76.3,88.5,80.4,81.3,70.8,76.5,73.0,119.1,164.2,105.7,110.0,116.9,119.6,103.0,103.6,89.4,104.4,100.5,97.5,97.9,111.4,134.5,108.8,93.6,85.1,85.6,73.2,74.6,71.5,74.1,66.4,60.7,58.8,58.1,59.2,58.5,60.9,55.7,56.2,53.7,53.5,51.8,60.6,54.7,50.1,49.1,48.7,44.9,41.3,42.5,45.4,37.8,39.2,39.3,33.1,36.2,34.5,33.1,32.5,34.9,33.7,30.5,24.8,32.2,29.3,27.7,26.6,23.7,24.9,24.2,23.5,21.5,22.5,22.6],"dv":[26.1,23.7,25.2,26.5,29.6,31.8,37.0,40.6,42.2,42.1,45.7,40.2,33.3,39.8,44.6,48.3,52.2,60.0,66.8,73.7,72.1,74.3,81.9,88.1,88.0,81.9,93.6,104.8,114.7,121.8,136.1,139.5,147.3,148.9,161.7,174.4,186.1,192.1,195.4,202.9,212.2,226.0,235.7,243.6,252.6,259.3,269.1,280.2,295.4,303.7,311.2,321.4,341.5,351.9,368.0,374.5,387.7,393.6,417.3,433.5,443.5,452.8,462.8,465.7,482.7,501.4,535.0,516.1,539.7,548.3,575.2,590.4,596.4,602.5,613.2,628.0,645.4,654.4,667.8,682.2,697.9,700.1,728.4,730.4,744.9,748.4,757.2,763.2,790.6,802.3],"fit":[22.5,23.4,24.3,26.1,28.5,30.9,34.1,36.2,38.1,39.6,43.1,44.9,35.8,37.0,52.1,55.5,60.0,64.6,70.9,74.6,78.0,80.3,86.9,89.9,97.1,99.5,101.8,107.6,115.6,123.4,134.4,140.4,145.7,148.9,159.9,164.1,176.0,179.0,181.7,190.6,203.3,215.3,232.9,241.4,248.7,252.2,268.8,273.7,291.4,294.2,296.3,308.6,326.5,343.3,368.4,379.0,387.5,390.1,412.6,417.0,440.7,441.5,441.3,456.1,479.0,499.8,532.4,543.6,551.6,551.1,578.5,580.3,608.6,605.1,600.3,615.7,641.9,664.7,702.7,712.0,717.1,711.0,740.7,737.5,767.6,757.4,745.8,759.2,785.5,807.3]},"season":{"raw":[3.5,-3.1,3.9,-3.0,-1.6,-3.6,0.4,2.1,0.9,7.2,3.7,6.1],"day":[1.6,4.2,2.0,-1.6,-3.3,-2.2,-1.4,0.4,2.2,5.2,5.1,4.1]}};
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const NS = 'http://www.w3.org/2000/svg';
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const mLabel = ym => { const [y, m] = ym.split('-'); return MONTHS[+m - 1] + ' ' + y; };
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fmt = (v, d = 0) => v == null ? '–' : v.toLocaleString('en-IN', { minimumFractionDigits: d, maximumFractionDigits: d });
+function el(tag, attrs = {}, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+/* ---------- Stage scaling ---------- */
+const stage = $('#stage'), viewport = $('#viewport');
+function fit() {
+  const w = viewport.clientWidth, h = viewport.clientHeight;
+  const s = Math.min(w / 1280, (h - 64) / 720, 1.6);
+  stage.style.transform = `translate(-50%, -50%) scale(${Math.max(s, 0.1)})`;
+}
+window.addEventListener('resize', fit); fit();
+
+/* ---------- Line chart ---------- */
+function niceTicks(lo, hi, n = 5) {
+  const span = hi - lo, step0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(step0)));
+  const step = [1, 2, 2.5, 5, 10].map(f => f * mag).find(s => span / s <= n) || 10 * mag;
+  const t = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) t.push(+v.toFixed(6));
+  return { ticks: t, lo: Math.min(lo, t[0]), hi: Math.max(hi, t[t.length - 1]) };
+}
+function logTicks(lo, hi) {
+  const t = []; for (let e = Math.floor(Math.log10(lo)); e <= Math.ceil(Math.log10(hi)); e++)
+    for (const f of [1, 2, 5]) { const v = f * Math.pow(10, e); if (v >= lo * 0.999 && v <= hi * 1.001) t.push(v); }
+  return t;
+}
+function lineChart(host, cfg) {
+  host.innerHTML = '';
+  const W = cfg.w || 760, H = cfg.h || 440, M = { l: 62, r: cfg.rpad || 64, t: 14, b: 34 };
+  const n = cfg.labels.length, pw = W - M.l - M.r, ph = H - M.t - M.b;
+  const all = cfg.series.flatMap(s => s.values).filter(v => v != null);
+  let lo = Math.min(...all), hi = Math.max(...all), y, ticks;
+  if (cfg.log) {
+    lo = lo * 0.9; hi = hi * 1.1; ticks = logTicks(lo, hi);
+    y = v => M.t + ph - (Math.log10(v) - Math.log10(lo)) / (Math.log10(hi) - Math.log10(lo)) * ph;
+  } else {
+    if (cfg.zero) lo = Math.min(0, lo);
+    const nt = niceTicks(lo, hi, cfg.nticks || 5); lo = nt.lo; hi = nt.hi; ticks = nt.ticks;
+    y = v => M.t + ph - (v - lo) / (hi - lo) * ph;
+  }
+  const x = i => M.l + (n === 1 ? 0 : i / (n - 1) * pw);
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': cfg.aria || 'chart' }, host);
+  const g = el('g', { class: 'grid' }, svg);
+  ticks.forEach(v => {
+    el('line', { x1: M.l, x2: W - M.r, y1: y(v), y2: y(v) }, g);
+    const t = el('text', { x: M.l - 10, y: y(v) + 4, 'text-anchor': 'end' }, svg); t.textContent = (cfg.yFmt || fmt)(v);
+  });
+  cfg.labels.forEach((lb, i) => {
+    if (lb.endsWith('-01')) {
+      const yr = lb.slice(0, 4);
+      if (cfg.yearEvery && (+yr % cfg.yearEvery)) return;
+      el('line', { x1: x(i), x2: x(i), y1: H - M.b, y2: H - M.b + 5, stroke: css('--line') }, svg);
+      const t = el('text', { x: x(i), y: H - M.b + 20, 'text-anchor': 'middle' }, svg); t.textContent = yr;
+    }
+  });
+  (cfg.events || []).forEach(ev => {
+    const i = cfg.labels.indexOf(ev.at); if (i < 0) return;
+    const eg = el('g', { class: 'ev' }, svg);
+    el('line', { x1: x(i), x2: x(i), y1: M.t, y2: H - M.b }, eg);
+    const t = el('text', { x: x(i) + 6, y: M.t + 12 + (ev.dy || 0) }, eg); t.textContent = ev.label;
+  });
+  if (cfg.zeroLine && lo < 0) el('line', { x1: M.l, x2: W - M.r, y1: y(0), y2: y(0), stroke: css('--ink-2'), 'stroke-width': 1 }, svg);
+  const paths = [];
+  cfg.series.forEach(s => {
+    if (s.dots) {
+      const dg = el('g', {}, svg);
+      s.values.forEach((v, i) => { if (v != null) el('circle', { cx: x(i), cy: y(v), r: 3.2, fill: s.color, opacity: s.opacity || 1 }, dg); });
+      return;
+    }
+    let d = '', pen = false;
+    s.values.forEach((v, i) => { if (v == null) { pen = false; return; } d += (pen ? 'L' : 'M') + x(i).toFixed(1) + ',' + y(v).toFixed(1); pen = true; });
+    const p = el('path', { d, fill: 'none', stroke: s.color, 'stroke-width': s.width || 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', opacity: s.opacity || 1, pathLength: 1, class: 'draw' }, svg);
+    if (s.dash) p.setAttribute('stroke-dasharray', s.dash);
+    paths.push(p);
+    if (s.endLabel) {
+      let li = s.values.length - 1; while (s.values[li] == null) li--;
+      const t = el('text', { x: x(li) + 8, y: y(s.values[li]) + 4, class: 'endlbl', fill: s.color }, svg);
+      t.style.fill = s.color; t.textContent = s.endLabel(s.values[li]);
+    }
+  });
+  // hover layer
+  const cross = el('line', { class: 'cross', y1: M.t, y2: H - M.b, opacity: 0 }, svg);
+  const marks = cfg.series.map(s => el('circle', { r: 5, fill: s.color, stroke: css('--paper'), 'stroke-width': 2, opacity: 0 }, svg));
+  const tip = document.createElement('div'); tip.className = 'tip'; host.appendChild(tip);
+  const hit = el('rect', { x: M.l, y: M.t, width: pw, height: ph, fill: 'transparent' }, svg);
+  function show(i) {
+    cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('opacity', 1);
+    let html = `<div style="opacity:.7">${mLabel(cfg.labels[i])}</div>`;
+    cfg.series.forEach((s, k) => {
+      const v = s.values[i];
+      if (v == null) { marks[k].setAttribute('opacity', 0); return; }
+      marks[k].setAttribute('cx', x(i)); marks[k].setAttribute('cy', y(v)); marks[k].setAttribute('opacity', 1);
+      html += `<div><span class="sw" style="background:${s.color}"></span>${s.name}: ${(s.tipFmt || cfg.tipFmt || fmt)(v)}</div>`;
+    });
+    tip.innerHTML = html; tip.classList.add('on');
+    const px = x(i) / W * 100; tip.style.left = px + '%';
+    tip.style.transform = px > 60 ? 'translateX(calc(-100% - 12px))' : 'translateX(12px)';
+  }
+  function hide() { cross.setAttribute('opacity', 0); marks.forEach(m => m.setAttribute('opacity', 0)); tip.classList.remove('on'); }
+  function idxFromEvent(e) {
+    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    return Math.max(0, Math.min(n - 1, Math.round((p.x - M.l) / pw * (n - 1))));
+  }
+  hit.addEventListener('pointermove', e => show(idxFromEvent(e)));
+  hit.addEventListener('pointerleave', hide);
+  const api = { svg, x, y, W, H, M, paths, animate() { paths.forEach(p => { p.classList.remove('go'); void p.getBoundingClientRect(); p.classList.add('go'); }); } };
+  if (cfg.instant) paths.forEach(p => p.classList.add('go')); else requestAnimationFrame(() => requestAnimationFrame(api.animate));
+  return api;
+}
+
+/* ---------- Bar chart (seasonality, animated between modes) ---------- */
+function seasonChart(host) {
+  host.innerHTML = '';
+  const W = 760, H = 440, M = { l: 54, r: 16, t: 14, b: 34 }, pw = W - M.l - M.r, ph = H - M.t - M.b;
+  const lo = -5, hi = 8, y = v => M.t + ph - (v - lo) / (hi - lo) * ph;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Average percent above or below trend by month' }, host);
+  const g = el('g', { class: 'grid' }, svg);
+  [-4, -2, 0, 2, 4, 6, 8].forEach(v => {
+    el('line', { x1: M.l, x2: W - M.r, y1: y(v), y2: y(v) }, g);
+    const t = el('text', { x: M.l - 10, y: y(v) + 4, 'text-anchor': 'end' }, svg); t.textContent = (v > 0 ? '+' : '') + v + '%';
+  });
+  el('line', { x1: M.l, x2: W - M.r, y1: y(0), y2: y(0), stroke: css('--ink-2'), 'stroke-width': 1.2 }, svg);
+  const bw = pw / 12, bars = [], lbls = [];
+  for (let i = 0; i < 12; i++) {
+    const cx = M.l + bw * i + bw / 2;
+    const t = el('text', { x: cx, y: H - 10, 'text-anchor': 'middle' }, svg); t.textContent = MONTHS[i];
+    bars.push(el('rect', { x: cx - bw * 0.32, width: bw * 0.64, y: y(0), height: 0, rx: 3 }, svg));
+    const vl = el('text', { x: cx, 'text-anchor': 'middle', class: 'endlbl' }, svg); lbls.push(vl);
+  }
+  let cur = new Array(12).fill(0), raf;
+  function draw(vals) {
+    vals.forEach((v, i) => {
+      const top = y(Math.max(v, 0)), bot = y(Math.min(v, 0));
+      bars[i].setAttribute('y', top); bars[i].setAttribute('height', Math.max(bot - top, 0.5));
+      const colr = i === 1 ? css('--orange') : css('--blue');
+      bars[i].setAttribute('fill', colr); bars[i].style.opacity = (i === 1 || i >= 9) ? 1 : 0.45;
+      lbls[i].setAttribute('y', v >= 0 ? top - 7 : bot + 16);
+      lbls[i].textContent = (v > 0 ? '+' : '') + v.toFixed(1);
+      lbls[i].style.fill = (i === 1 || i >= 9) ? css('--ink') : css('--muted');
+    });
+  }
+  function to(target) {
+    cancelAnimationFrame(raf);
+    const from = cur.slice(), t0 = performance.now(), dur = matchMedia('(prefers-reduced-motion: reduce)').matches ? 1 : 900;
+    const step = now => {
+      const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      cur = from.map((f, i) => f + (target[i] - f) * e); draw(cur);
+      if (k < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+  }
+  return { to };
+}
+
+/* ---------- Slides & navigation ---------- */
+const slides = $$('.slide'); let cur = 0;
+const onEnter = {};
+slides.forEach((s, i) => $$('.pg', s).forEach(p => p.textContent = (i + 1) + ' / ' + slides.length));
+function resetSteps(s, shown) { $$('[data-step]', s).forEach(e => e.classList.toggle('hidden-step', !shown)); }
+function go(i, opts = {}) {
+  i = Math.max(0, Math.min(slides.length - 1, i));
+  const back = i < cur;
+  slides.forEach((s, k) => { s.classList.toggle('active', k === i); s.classList.toggle('past', k < i); });
+  resetSteps(slides[i], back || opts.showAll);
+  cur = i;
+  $('#prog').style.width = ((i + 1) / slides.length * 100) + '%';
+  $('#pgBtn').textContent = (i + 1) + ' / ' + slides.length;
+  $('#notesT').textContent = (i + 1) + ' · ' + slides[i].dataset.title;
+  $('#notesB').textContent = slides[i].dataset.notes || '';
+  try { history.replaceState(null, '', '#slide' + (i + 1)); } catch (e) {}
+  if (onEnter[i]) onEnter[i]();
+}
+function next() {
+  const hidden = $$('[data-step].hidden-step', slides[cur]);
+  if (hidden.length) { hidden[0].classList.remove('hidden-step'); return; }
+  if (cur < slides.length - 1) go(cur + 1);
+}
+function prev() { if (cur > 0) go(cur - 1); }
+document.addEventListener('keydown', e => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+  if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); next(); }
+  else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); prev(); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(slides.length - 1, { showAll: true });
+  else if (e.key === 'n' || e.key === 'N') toggleNotes();
+  else if (e.key === 'f' || e.key === 'F') toggleFs();
+  else if (e.key === 't' || e.key === 'T') toggleTheme();
+});
+let touchX = null;
+stage.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+stage.addEventListener('touchend', e => {
+  if (touchX == null) return; const dx = e.changedTouches[0].clientX - touchX; touchX = null;
+  if (Math.abs(dx) > 50) (dx < 0 ? next : prev)();
+});
+$('#nextBtn').onclick = next; $('#prevBtn').onclick = prev;
+function toggleNotes() { $('#notes').hidden = !$('#notes').hidden; }
+$('#notesBtn').onclick = toggleNotes;
+function toggleFs() {
+  try { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {}); else document.exitFullscreen(); } catch (e) {}
+}
+$('#fsBtn').onclick = toggleFs;
+function toggleTheme() {
+  const root = document.documentElement;
+  const isDark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  root.dataset.theme = isDark ? 'light' : 'dark';
+  redrawAll();
+}
+$('#themeBtn').onclick = toggleTheme;
+
+/* ---------- Slide 1: counter ---------- */
+onEnter[0] = () => {
+  const c = $('#counter'), target = 24.07, t0 = performance.now(), dur = 1600;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { c.textContent = target.toFixed(2); return; }
+  const step = now => { const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 4); c.textContent = (target * e).toFixed(2); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+};
+
+/* ---------- Slide 4: raw rows ---------- */
+$('#rawBtn').onclick = () => {
+  const box = $('#rawBox'), open = box.hidden; box.hidden = !open;
+  $('#rawBtn').textContent = open ? 'Hide raw rows' : 'Show raw rows';
+  $('#rawBtn').setAttribute('aria-expanded', open);
+  $('#rawHint').innerHTML = open ? 'Commas in Indian format, stray spaces, and one NPCI typo in <span class="flag">April 2026</span>.' : 'All numbers arrive as text. Click to see why.';
+};
+
+/* ---------- Slide 5: pipeline ---------- */
+const STAGES = [
+  { nm: 'Source', tool: 'NPCI', text: 'Eleven financial-year tables from NPCI\'s UPI Product Statistics, combined into one CSV and checked: every yearly total matches NPCI.',
+    code: '<span class="c"># 11 tables (FY 2016-17 to 2026-27)</span>\n<span class="c"># combined into one file:</span>\n<span class="s">2026-10-26-npci-upi-monthly-raw.csv</span>\n<span class="c"># 126 rows x 5 columns</span>' },
+  { nm: 'Load', tool: 'pandas', text: 'Read every column as text on purpose, so Indian-format numbers are not silently mangled.',
+    code: 'raw = pd.<span class="f">read_csv</span>(<span class="s">\'2026-10-26-npci-upi-monthly-raw.csv\'</span>,\n                  dtype=str)\nraw.<span class="f">info</span>()   <span class="c"># all columns: object (text)</span>' },
+  { nm: 'Clean', tool: 'pandas', text: 'One helper removes commas and spaces. Dates are parsed and sorted, gaps and duplicates checked, zero months dropped.',
+    code: '<span class="f">def</span> <span class="f">to_number</span>(col):\n    <span class="f">return</span> pd.<span class="f">to_numeric</span>(col.str.<span class="f">replace</span>(<span class="s">\',\'</span>, <span class="s">\'\'</span>).str.<span class="f">strip</span>())\n\ndf[<span class="s">\'date\'</span>] = pd.<span class="f">to_datetime</span>(df[<span class="s">\'month\'</span>], format=<span class="s">\'%B-%Y\'</span>)\ndf = df.<span class="f">sort_values</span>(<span class="s">\'date\'</span>)\ndf = df[df[<span class="s">\'volume_mn\'</span>] > 0]' },
+  { nm: 'Features', tool: 'pandas', text: 'Four derived measures: per-day volume, ticket size in rupees, year-on-year growth and a 12-month average.',
+    code: 'df[<span class="s">\'daily_volume_mn\'</span>] = df[<span class="s">\'volume_mn\'</span>] / df[<span class="s">\'days\'</span>]\ndf[<span class="s">\'ticket_rs\'</span>] = df[<span class="s">\'value_cr\'</span>]*1e7 / (df[<span class="s">\'volume_mn\'</span>]*1e6)\ndf[<span class="s">\'yoy_volume\'</span>] = df[<span class="s">\'volume_mn\'</span>].<span class="f">pct_change</span>(12) * 100\ndf[<span class="s">\'ticket_12m\'</span>] = df[<span class="s">\'ticket_rs\'</span>].<span class="f">rolling</span>(12).<span class="f">mean</span>()' },
+  { nm: 'EDA', tool: 'matplotlib', text: 'Annual summary with groupby, correlations, and nine charts saved as PNGs for the report.',
+    code: 'annual = df.<span class="f">groupby</span>(<span class="s">\'fy\'</span>).<span class="f">agg</span>(volume_bn=(<span class="s">\'volume_bn\'</span>, <span class="s">\'sum\'</span>), ...)\ndf[[<span class="s">\'banks_live\'</span>, <span class="s">\'volume_mn\'</span>]].<span class="f">corr</span>()\nplt.<span class="f">plot</span>(df[<span class="s">\'date\'</span>], df[<span class="s">\'ticket_12m\'</span>])\nplt.<span class="f">yscale</span>(<span class="s">\'log\'</span>)' },
+  { nm: 'Model', tool: 'statsmodels', text: 'OLS with a quadratic trend, month dummies and a COVID dummy. Newey-West standard errors handle autocorrelation.',
+    code: 'model = smf.<span class="f">ols</span>(<span class="s">\'np.log(daily_volume_mn) ~ t + I(t**2)\'</span>\n                <span class="s">\' + C(month_num) + covid\'</span>, data=reg)\nresults = model.<span class="f">fit</span>(cov_type=<span class="s">\'HAC\'</span>,\n                    cov_kwds={<span class="s">\'maxlags\'</span>: 12})' }
+];
+const pipe = $('#pipe');
+STAGES.forEach((s, i) => {
+  const b = document.createElement('button'); b.className = 'node'; b.setAttribute('aria-pressed', 'false');
+  b.innerHTML = `<span class="bar"></span><span class="tool">${String(i + 1).padStart(2, '0')} · ${s.tool}</span><span class="nm">${s.nm}</span>`;
+  b.onclick = () => pickStage(i); pipe.appendChild(b);
+});
+function pickStage(i) {
+  $$('.node', pipe).forEach((n, k) => n.setAttribute('aria-pressed', k <= i));
+  $('#stageName').textContent = STAGES[i].nm; $('#stageText').textContent = STAGES[i].text; $('#stageCode').innerHTML = STAGES[i].code;
+}
+pickStage(2);
+
+/* ---------- Slide 6: cleaning before/after + sanity bars ---------- */
+const CLEAN = [
+  ['November-2018', '524.94', '82232.21', 524.94, 82232.21],
+  ['December-2018', '620.17', '"1,02,594.82"', 620.17, 102594.82],
+  ['March-2025', '" 18,301.51 "', '" 24,77,221.61 "', 18301.51, 2477221.61],
+  ['April-2026', '"22,346.8"', '"29,029,88.05"', 22346.8, 2902988.05]
+];
+function renderClean(after) {
+  $('#cleanTbl tbody').innerHTML = CLEAN.map(r => `<tr><td>${after ? r[0].replace(/(\w+)-(\d+)/, (m, mo, y) => y + '-' + String(new Date(mo + ' 1, 2000').getMonth() + 1).padStart(2, '0') + '-01') : r[0]}</td>` +
+    `<td class="r">${after ? r[3].toFixed(2) : r[1]}</td><td class="r ${!after && r[0] === 'April-2026' ? 'flag' : ''}">${after ? r[4].toFixed(2) : r[2]}</td></tr>`).join('');
+  $('#cBefore').setAttribute('aria-pressed', !after); $('#cAfter').setAttribute('aria-pressed', after);
+}
+$('#cBefore').onclick = () => renderClean(false); $('#cAfter').onclick = () => renderClean(true);
+renderClean(false);
+function sanity() {
+  const host = $('#sanity'); host.innerHTML = '';
+  const vals = [['Mar 2026', 29.53], ['Apr 2026', 29.03], ['May 2026', 29.90]], W = 540, H = 96, x0 = 86, max = 32;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Value in lakh crore, March to May 2026' }, host);
+  vals.forEach((v, i) => {
+    const yy = 6 + i * 30, w = (W - x0 - 70) * v[1] / max;
+    const t = el('text', { x: 0, y: yy + 15 }, svg); t.textContent = v[0];
+    const r = el('rect', { x: x0, y: yy, height: 20, width: w, rx: 3, fill: i === 1 ? css('--orange') : css('--blue') }, svg);
+    const lt = el('text', { x: x0 + w + 8, y: yy + 15, class: 'endlbl' }, svg); lt.textContent = '₹' + v[1].toFixed(2); lt.style.fill = css('--ink');
+  });
+}
+
+/* ---------- Slide 7: equation terms ---------- */
+const TERMS = {
+  y: ['log(daily volume)', 'Log turns steady growth into a straight line, so coefficients read as % effects. Dividing by days in the month removes the February effect.'],
+  t: ['t · months since April 2019', 'Counts 0, 1, 2, ... 89. Its coefficient β₁ is the underlying monthly growth rate at the start of the sample.'],
+  t2: ['t² · the key term', 'If β₂ is negative, the growth rate itself falls over time. Implied annual growth at month t = e^(12·(β₁ + 2β₂t)) − 1.'],
+  m: ['Month dummies', 'Eleven 0/1 variables, January is the baseline. Each one measures how much that month sits above or below January after removing the trend.'],
+  c: ['COVID dummy', 'Equals 1 for April and May 2020 (national lockdown), 0 otherwise. Its coefficient measures the size of the lockdown shock.'],
+  e: ['Error term', 'What the model cannot explain. In monthly data it is correlated with last month\'s error, so we use Newey-West standard errors.']
+};
+$$('.term').forEach(b => {
+  const pick = () => { $$('.term').forEach(x => x.classList.toggle('on', x === b)); $('#exT').textContent = TERMS[b.dataset.k][0]; $('#exP').textContent = TERMS[b.dataset.k][1];
+    $('#explain').style.borderLeftColor = b.dataset.k === 't2' ? 'var(--orange)' : 'var(--blue)'; $('#exT').style.color = b.dataset.k === 't2' ? 'var(--orange)' : 'var(--blue)'; };
+  b.addEventListener('mouseenter', pick); b.addEventListener('focus', pick); b.addEventListener('click', pick);
+});
+
+/* ---------- Slide 8: growth ---------- */
+const i19 = DATA.months.indexOf('2019-04');
+const G = { labels: DATA.months.slice(i19), vol: DATA.vol.slice(i19), val: DATA.val.slice(i19), yv: DATA.yv.slice(i19), yval: DATA.yval.slice(i19) };
+G.vi = G.vol.map(v => +(v / G.vol[0] * 100).toFixed(1)); G.ai = G.val.map(v => +(v / G.val[0] * 100).toFixed(1));
+let gTab = 1, gLog = false;
+function legend(host, items) { host.innerHTML = items.map(([c, n, dot]) => `<span><i class="${dot ? 'dot' : ''}" style="background:${c}"></i>${n}</span>`).join(''); }
+function drawGrowth(instant) {
+  const blue = css('--blue'), orange = css('--orange');
+  legend($('#gLegend'), [[blue, 'Volume (number of transactions)'], [orange, 'Value (rupees moved)']]);
+  $('#scaleSeg').hidden = gTab !== 1;
+  if (gTab === 1) {
+    lineChart($('#growthChart'), { labels: G.labels, log: gLog, instant, aria: 'Volume and value index, April 2019 = 100',
+      series: [{ name: 'Volume', values: G.vi, color: blue, endLabel: v => fmt(v) }, { name: 'Value', values: G.ai, color: orange, endLabel: v => fmt(v) }],
+      events: [{ at: '2020-04', label: 'COVID lockdown' }], tipFmt: v => fmt(v) });
+  } else {
+    lineChart($('#growthChart'), { labels: G.labels, zero: true, instant, aria: 'Year-on-year growth', yFmt: v => v + '%',
+      series: [{ name: 'Volume', values: G.yv, color: blue }, { name: 'Value', values: G.yval, color: orange }],
+      events: [{ at: '2020-04', label: 'COVID lockdown' }, { at: '2021-04', label: 'Base effect', dy: 18 }], tipFmt: v => fmt(v, 1) + '%' });
+  }
+  $('#gTab1').setAttribute('aria-selected', gTab === 1); $('#gTab2').setAttribute('aria-selected', gTab === 2);
+  $('#sLin').setAttribute('aria-pressed', !gLog); $('#sLog').setAttribute('aria-pressed', gLog);
+}
+$('#gTab1').onclick = () => { gTab = 1; drawGrowth(); }; $('#gTab2').onclick = () => { gTab = 2; drawGrowth(); };
+$('#sLin').onclick = () => { gLog = false; drawGrowth(); }; $('#sLog').onclick = () => { gLog = true; drawGrowth(); };
+onEnter[7] = () => drawGrowth();
+
+/* ---------- Slide 9: ticket + seasonality ---------- */
+const i19b = DATA.months.indexOf('2019-01');
+let tTab = 1, sMode = 'raw', season = null;
+function drawTicket(instant) {
+  const blue = css('--blue');
+  const isT = tTab === 1;
+  $('#ticketChart').hidden = !isT; $('#seasonChart').hidden = isT; $('#seasonSeg').hidden = isT;
+  $('#tTab1').setAttribute('aria-selected', isT); $('#tTab2').setAttribute('aria-selected', !isT);
+  if (isT) {
+    legend($('#tLegend'), [[blue + '66', 'Monthly'], [blue, '12-month average']]);
+    const labels = DATA.months.slice(i19b);
+    const api = lineChart($('#ticketChart'), { labels, instant, aria: 'Average value per UPI transaction in rupees', yFmt: v => '₹' + fmt(v), tipFmt: v => '₹' + fmt(v), nticks: 5,
+      series: [{ name: 'Monthly', values: DATA.ticket.slice(i19b), color: blue, width: 1.5, opacity: 0.4 }, { name: '12-month avg', values: DATA.t12.slice(i19b), color: blue, width: 3.5, endLabel: v => '₹' + fmt(v) }] });
+    const t12 = DATA.t12.slice(i19b); let pk = 0; t12.forEach((v, i) => { if (v > t12[pk]) pk = i; });
+    const tx = el('text', { x: api.x(pk), y: api.y(t12[pk]) - 26, 'text-anchor': 'middle', class: 'endlbl' }, api.svg);
+    tx.style.fill = css('--ink'); tx.textContent = `Peak ₹${fmt(t12[pk])} · ${mLabel(labels[pk])}`;
+  } else {
+    legend($('#tLegend'), [[css('--orange'), 'February', true], [blue, 'October to December', true], [blue + '73', 'Other months', true]]);
+    if (!season) season = seasonChart($('#seasonChart'));
+    $('#sRaw').setAttribute('aria-pressed', sMode === 'raw'); $('#sDay').setAttribute('aria-pressed', sMode === 'day');
+    season.to(DATA.season[sMode]);
+  }
+}
+$('#tTab1').onclick = () => { tTab = 1; drawTicket(); };
+$('#tTab2').onclick = () => { tTab = 2; drawTicket(); };
+$('#sRaw').onclick = () => { sMode = 'raw'; drawTicket(); };
+$('#sDay').onclick = () => { sMode = 'day'; drawTicket(); };
+onEnter[8] = () => drawTicket();
+
+/* ---------- Slide 10: regression + slider ---------- */
+let reg = null;
+function drawReg(instant) {
+  const R = DATA.reg;
+  reg = lineChart($('#regChart'), { labels: R.months, zero: true, instant, h: 380, aria: 'Model-implied annual growth vs actual year-on-year growth', yFmt: v => v + '%', tipFmt: v => fmt(v, 1) + '%',
+    series: [{ name: 'Actual YoY', values: R.actual, color: css('--muted'), dots: true, opacity: 0.75 }, { name: 'Implied', values: R.implied, color: css('--blue'), width: 3.5 }] });
+  reg.vline = el('line', { y1: reg.M.t, y2: reg.H - reg.M.b, stroke: css('--orange'), 'stroke-width': 1.5 }, reg.svg);
+  reg.dot = el('circle', { r: 7, fill: css('--orange'), stroke: css('--paper'), 'stroke-width': 2.5 }, reg.svg);
+  setReg(+$('#regSlider').value);
+}
+function setReg(i) {
+  const R = DATA.reg; if (!reg) return;
+  reg.vline.setAttribute('x1', reg.x(i)); reg.vline.setAttribute('x2', reg.x(i));
+  reg.dot.setAttribute('cx', reg.x(i)); reg.dot.setAttribute('cy', reg.y(R.implied[i]));
+  $('#regRead').textContent = Math.round(R.implied[i]) + '%';
+  $('#regLbl').textContent = 'Implied annual growth, ' + mLabel(R.months[i]) + (R.actual[i] != null ? ' · actual ' + Math.round(R.actual[i]) + '%' : '');
+}
+$('#regSlider').addEventListener('input', e => setReg(+e.target.value));
+onEnter[9] = () => drawReg();
+onEnter[5] = () => sanity();
+
+function redrawAll() {
+  if (cur === 7) drawGrowth(true);
+  if (cur === 8) { season = null; $('#seasonChart').innerHTML = ''; drawTicket(true); }
+  if (cur === 9) drawReg(true);
+  if (cur === 5) sanity();
+}
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redrawAll); } catch (e) {}
+
+/* start */
+const start = (() => { const m = /^#slide(\d+)$/.exec(location.hash || ''); return m ? Math.min(+m[1], slides.length) - 1 : 0; })();
+go(start, { showAll: start > 0 });
+</script>
+
+</body>
+</html>
